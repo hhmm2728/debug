@@ -1,4 +1,3 @@
-// 2
 #include <SPI.h>
 #include "DW1000Ranging.h"
 #include <WiFi.h>
