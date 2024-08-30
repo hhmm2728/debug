@@ -51,7 +51,10 @@ void setup() {
     Serial.println("Setup started");
     setupWiFi();
     setupUWB();
-
+    
+    lastAnchorRoleSwitchTime = millis(); // 초기 앵커 역할 전환 시간 이슈 테스트
+    lastTagRoleSwitchTime = millis();
+    
     Serial.println("Setup completed");
 }
 
