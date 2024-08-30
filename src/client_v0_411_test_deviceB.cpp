@@ -47,7 +47,7 @@ std::vector<DeviceInfo> deviceList;
 
 void setup() {
     Serial.begin(115200);
-    delay(1000);
+    delay(7000);
     Serial.println("Setup started");
     setupWiFi();
     setupUWB();
