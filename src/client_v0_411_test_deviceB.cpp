@@ -47,11 +47,14 @@ std::vector<DeviceInfo> deviceList;
 
 void setup() {
     Serial.begin(115200);
-    delay(7000);
+    delay(6000);
     Serial.println("Setup started");
     setupWiFi();
     setupUWB();
-
+    
+    lastAnchorRoleSwitchTime = millis(); // 초기 앵커 역할 전환 시간 이슈 테스트
+    lastTagRoleSwitchTime = millis(); // loop() 문 실행 되면서 checkAndSwitchRole() 함수내의 역할 전환 변수에 최신화된 시간 초기화 해서 Anchor 역할 전환 시간 디버깅(현재 부팅 후 3초후 역할 바뀜)
+    // setup()시 delay가 기본 1000ms, setupWifi()에서 500ms 할당되어 있으므로 Anchor 초기화 시간 1.5초 짧아짐 setup() 이후 역할 전환 시간 변수 현재 시간으로 초기화 하면 Anchor 역할 전환 시간 길어짐
     Serial.println("Setup completed");
 }
 
