@@ -14,8 +14,8 @@ const uint8_t PIN_IRQ = 34;
 const uint8_t PIN_SS = 4;
 
 // WiFi 설정
-const char* ssid = "your_wifi_ssid";
-const char* password = "your_wifi_password";
+const char* ssid = "hhmm";
+const char* password = "27281106!@";
 const char* udpAddress = "192.168.0.10";
 const int udpPort = 3333;
 
@@ -47,7 +47,7 @@ std::vector<DeviceInfo> deviceList;
 
 void setup() {
     Serial.begin(115200);
-    delay(1000);
+    delay(12000);
     Serial.println("Setup started");
     setupWiFi();
     setupUWB();

@@ -1,3 +1,10 @@
+"""
+UDP 서버를 이용한 디바이스 위치 추적 및 시각화 프로그램
+
+이 모듈은 UDP를 통해 디바이스로부터 위치 데이터를 수신하고,
+실시간으로 디바이스의 위치를 업데이트하여 그래프로 표시합니다.
+"""
+
 import socket
 import json
 import logging
@@ -24,15 +31,21 @@ ax.set_title("Device Positions")
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 
-def update_plot(frame):
+def update_plot(_):
+    """플롯 업데이트 함수"""
+    # 기존 주석 제거
+    for text in ax.texts:
+        text.remove()
+    
     x = [dev['position'][0] for dev in devices.values()]
     y = [dev['position'][1] for dev in devices.values()]
-    scatter.set_offsets(list(zip(x, y)))
-    for i, (addr, dev) in enumerate(devices.items()):
-        ax.annotate(f"{addr} ({dev['role']})", (x[i], y[i]))
+    if x and y:  # x와 y가 비어있지 않은 경우에만 업데이트
+        scatter.set_offsets(list(zip(x, y)))
+        for i, (addr, dev) in enumerate(devices.items()):
+            ax.annotate(f"{addr} ({dev['role']})", (x[i], y[i]))
     return scatter,
 
-animation = FuncAnimation(fig, update_plot, interval=1000, blit=True)
+animation = FuncAnimation(fig, update_plot, interval=1000, blit=True, cache_frame_data=False)
 
 def validate_distance(distance):
     """거리 데이터 유효성 검사"""
@@ -42,16 +55,19 @@ def process_data(data):
     """수신된 데이터 처리"""
     try:
         json_data = json.loads(data.decode())
-        logger.info(f"Received data: {json_data}")
+        logger.info("Received data: %s", json_data)
 
         device_address = json_data['device_address']
-        role = json_data['role']
+        
+        # 'role' 키가 없는 경우 기존 역할을 유지하거나 기본값 설정
+        role = json_data.get('role', devices.get(device_address, {}).get('role', 'UNKNOWN'))
 
         if device_address not in devices:
             devices[device_address] = {'role': role, 'position': [0, 0]}
         else:
             if devices[device_address]['role'] != role:
-                logger.info(f"Device {device_address} changed role from {devices[device_address]['role']} to {role}")
+                logger.info("Device %s changed role from %s to %s",
+                            device_address, devices[device_address]['role'], role)
             devices[device_address]['role'] = role
 
         if 'range_data' in json_data:
@@ -61,27 +77,31 @@ def process_data(data):
                     # 실제 구현에서는 더 복잡한 위치 계산 알고리즘을 사용해야 합니다.
                     devices[device_address]['position'] = [range_info['range'], range_info['range']]
                     break
-        
-        logger.info(f"Updated device info: {devices[device_address]}")
+
+        logger.info("Updated device info: %s", devices[device_address])
 
     except json.JSONDecodeError:
-        logger.error(f"Failed to parse JSON data: {data}")
+        logger.error("Failed to parse JSON data: %s", data)
     except KeyError as e:
-        logger.error(f"Missing key in JSON data: {e}")
+        logger.error("Missing key in JSON data: %s", e)
 
 def main():
+    """메인 함수"""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind((UDP_IP, UDP_PORT))
-    logger.info(f"UDP server listening on {UDP_IP}:{UDP_PORT}")
+    logger.info("UDP server listening on %s:%s", UDP_IP, UDP_PORT)
 
     plt.show(block=False)
+    plt.pause(0.1)  # 초기 그래프 표시를 위한 잠깐의 멈춤
 
     while True:
-        data, addr = sock.recvfrom(1024)  # 버퍼 크기는 1024바이트
-        logger.debug(f"Received raw data: {data}")
-        process_data(data)
-        plt.pause(0.01)  # 그래프 업데이트를 위한 잠깐의 멈춤
+        try:
+            data, _ = sock.recvfrom(1024)  # 버퍼 크기는 1024바이트
+            logger.debug("Received raw data: %s", data)
+            process_data(data)
+            plt.pause(0.01)  # 그래프 업데이트를 위한 잠깐의 멈춤
+        except Exception as e:
+            logger.error("Error in main loop: %s", e)
 
 if __name__ == "__main__":
     main()
-
